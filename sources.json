@@ -1,0 +1,16 @@
+[
+	{ "name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/", "max": 5 },
+	{ "name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "max": 4 },
+	{ "name": "Google AI Blog", "url": "https://blog.google/technology/ai/rss/", "max": 3 },
+	{ "name": "Google DeepMind", "url": "https://deepmind.google/blog/rss.xml", "max": 3 },
+	{ "name": "Hugging Face Blog", "url": "https://huggingface.co/blog/feed.xml", "max": 3 },
+	{ "name": "Latent Space", "url": "https://www.latent.space/feed", "max": 3 },
+	{ "name": "Interconnects", "url": "https://www.interconnects.ai/feed", "max": 3 },
+	{ "name": "Claude Code releases", "url": "https://github.com/anthropics/claude-code/releases.atom", "max": 2 },
+	{ "name": "Codex releases", "url": "https://github.com/openai/codex/releases.atom", "max": 2 },
+	{ "name": "OMP releases", "url": "https://github.com/can1357/oh-my-pi/releases.atom", "max": 2 },
+	{ "name": "DEV · Claude Code", "url": "https://dev.to/feed/tag/claudecode", "max": 4 },
+	{ "name": "DEV · MCP", "url": "https://dev.to/feed/tag/mcp", "max": 3 },
+	{ "name": "r/ClaudeAI", "url": "https://www.reddit.com/r/ClaudeAI/top/.rss?t=week", "max": 3 },
+	{ "name": "Hacker News (AI)", "url": "https://hnrss.org/frontpage?q=AI+OR+LLM+OR+Claude+OR+Codex+OR+agent", "max": 4 }
+]

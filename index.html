@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>AI News</title>
+<style>
+:root{
+  --bg:#f3f5f9;--card:#fff;--ink:#101828;--ink2:#566074;--line:#dde2ec;
+  --blue:#2b50ff;--blue-ink:#fff;--sun:#ffd84d;--sun-ink:#2a2100;--ok:#1f9d5c;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 10px 28px -16px rgba(16,24,40,.22);
+  --font:"Avenir Next","SF Pro Display","Segoe UI Variable",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1220;--card:#161e32;--ink:#eef2fa;--ink2:#9aa6bf;--line:#26304a;--blue:#7f95ff;--blue-ink:#0d1220;--ok:#46c984;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -16px rgba(0,0,0,.7)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 72px}
+
+/* progress bar while the page is fetching new items */
+.bar{position:fixed;left:0;right:0;top:0;height:3px;overflow:hidden;opacity:0;transition:opacity .3s;z-index:30}
+.bar.on{opacity:1}
+.bar::after{content:"";position:absolute;inset:0;width:35%;background:var(--blue);animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+
+/* masthead */
+.mast{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:30px 0 20px}
+.mast h1{margin:0;font-size:32px;line-height:1;font-weight:800;letter-spacing:-.04em}
+.mast h1 span{color:var(--blue)}
+.tools{display:flex;align-items:center;gap:14px;color:var(--ink2);font-size:13px}
+.live{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.live.run .dot{background:var(--blue);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.7);opacity:.5}}
+.btn{border:0;border-radius:999px;padding:9px 18px;font-weight:700;cursor:pointer;background:var(--ink);color:var(--bg);transition:transform .15s}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.blue{background:var(--blue);color:var(--blue-ink)}
+
+/* tooling strip */
+.sys{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.tool{display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);border:0;border-radius:14px;padding:10px 14px;cursor:pointer;text-align:left}
+.tool b{font-weight:800}
+.tool small{color:var(--ink2);font-size:13px}
+.tool .st{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none}
+.tool.old{background:var(--sun);color:var(--sun-ink)}
+.tool.old small{color:var(--sun-ink);opacity:.8}
+.tool.old .st{background:var(--sun-ink)}
+.tool.unk .st{background:var(--line)}
+
+/* three fixed shelves */
+.shelves{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
+.shelf{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:20px 8px 10px;min-height:420px}
+.shelf h2{margin:0 14px 2px;font-size:20px;font-weight:800;letter-spacing:-.025em}
+.shelf .sub{margin:0 14px 12px;color:var(--ink2);font-size:13px}
+.shelf .tab{display:block;width:6px;height:28px;border-radius:0 4px 4px 0;position:absolute}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:flex;gap:12px;align-items:flex-start;width:100%;border:0;background:transparent;text-align:left;padding:11px 14px;border-radius:12px;cursor:pointer;transition:background .18s}
+.row:hover{background:var(--bg)}
+.row .ico{flex:none;width:36px;height:36px;border-radius:10px;background:var(--c,var(--blue));color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;letter-spacing:-.02em}
+.row .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .t strong{font-size:15px;line-height:1.3;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row .t span{color:var(--ink2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{margin:6px 14px 4px;color:var(--ink2);font-size:13px}
+.hole{margin:14px;padding:22px 16px;border:1.5px dashed var(--line);border-radius:14px;color:var(--ink2);font-size:14px;text-align:center}
+
+/* skeleton */
+.sk{margin:0;padding:11px 14px;display:flex;gap:12px}
+.sk i{display:block;border-radius:8px;background:linear-gradient(90deg,var(--line),var(--bg),var(--line));background-size:200% 100%;animation:shim 1.3s linear infinite}
+.sk i:first-child{width:36px;height:36px;flex:none}
+.sk div{flex:1;display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.sk div i{height:12px}.sk div i+i{width:55%}
+@keyframes shim{to{background-position:-200% 0}}
+
+/* other news (collapsed) */
+.other{margin-top:30px}
+.other>summary{cursor:pointer;font-weight:700;color:var(--ink2);padding:8px 0;list-style:none}
+.other>summary::before{content:"+";display:inline-block;width:22px;transition:transform .2s}
+.other[open]>summary::before{transform:rotate(45deg)}
+.other .rows{margin-top:8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:10px 8px}
+.foot{margin-top:22px;color:var(--ink2);font-size:13px}
+
+/* one load sequence */
+.boot .mast,.boot .sys,.boot .shelf{animation:rise .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*90ms)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.row.fresh{animation:pop .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pop{from{opacity:0;transform:translateX(-8px);background:var(--sun)}to{opacity:1;transform:none}}
+
+/* drawer: full detail only on demand */
+.scrim{position:fixed;inset:0;background:rgba(8,12,24,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(500px,100%);background:var(--card);z-index:50;transform:translateX(102%);transition:transform .38s cubic-bezier(.2,.8,.2,1);overflow-y:auto;box-shadow:-20px 0 50px -20px rgba(0,0,0,.35);overscroll-behavior:contain}
+.drawer.on{transform:none}
+.dcover{aspect-ratio:16/8;background:linear-gradient(135deg,var(--c1),var(--c2));position:relative;overflow:hidden}
+.dcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+.dcover img.ok{opacity:1}
+.dbody{padding:22px 26px 40px;display:flex;flex-direction:column;gap:16px}
+.drawer h2{margin:0;font-size:25px;line-height:1.2;font-weight:800;letter-spacing:-.03em;text-wrap:balance}
+.drawer .sum{margin:0;font-size:16.5px;line-height:1.65;max-width:62ch}
+.drawer ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.drawer blockquote{margin:0;padding:2px 0 2px 16px;border-left:4px solid var(--blue);color:var(--ink2);font-size:15px}
+.meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--ink2);font-size:13px}
+.meta strong{color:var(--ink);font-weight:700}
+.tag{display:inline-block;background:var(--blue);color:var(--blue-ink);font-weight:700;font-size:13px;padding:3px 11px;border-radius:999px}
+.sug{background:var(--sun);color:var(--sun-ink);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.sug h3{margin:0;font-size:17px;font-weight:800;line-height:1.3}
+.sug p{margin:0;font-size:14.5px}
+.note{font-size:13px;color:var(--ink2);background:var(--bg);border-radius:10px;padding:10px 12px;margin:0}
+dialog{border:0;border-radius:20px;padding:0;background:var(--card);color:var(--ink);box-shadow:0 30px 80px -20px rgba(0,0,0,.55);width:min(460px,calc(100% - 32px));animation:dpop .25s cubic-bezier(.2,.8,.2,1)}
+dialog::backdrop{background:rgba(8,12,24,.55)}
+@keyframes dpop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.dbox{padding:24px 26px 22px;display:flex;flex-direction:column;gap:14px}
+.dbox h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.03em}
+.dbox .ver{margin:0;font-size:20px}
+.dbox .ver b{font-weight:800}
+.dbox code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);padding:2px 7px;border-radius:6px}
+.out{margin:0;max-height:220px;overflow:auto;background:#0a0f1c;color:#cfe3ff;border-radius:12px;padding:12px 14px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.msg{margin:0;font-weight:600}
+.msg.bad{color:#d92d20}
+.acts{display:flex;justify-content:flex-end;gap:10px}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:1}
+.meter i{display:block;height:100%;width:0;background:var(--blue);border-radius:3px;transition:width .9s .25s cubic-bezier(.2,.8,.2,1)}
+.drawer.on .meter i{width:var(--w)}
+.score{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ink2)}
+.stats{display:flex;gap:26px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:26px;font-weight:800;letter-spacing:-.03em}
+.stats span{font-size:13px;color:var(--ink2)}
+.close{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(10,14,26,.6);color:#fff;font-size:22px;line-height:1;cursor:pointer;z-index:2}
+.dlink{align-self:flex-start;text-decoration:none;display:inline-block}
+
+@media (max-width:980px){.shelves{grid-template-columns:minmax(0,1fr)}.shelf{min-height:0;min-width:0}.other .rows{grid-template-columns:minmax(0,1fr)}}
+.shelf,.rows,.rows li,.row{min-width:0}
+@media (max-width:860px){
+  .wrap{padding:0 16px 56px}
+  .drawer{top:auto;width:100%;height:88vh;border-radius:22px 22px 0 0;transform:translateY(102%)}
+  .drawer.on{transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important}
+}
+</style>
+</head>
+<body>
+<div class="bar" id="bar" aria-hidden="true"></div>
+<div class="wrap boot" id="app">
+  <header class="mast" style="--i:0">
+    <h1>AI<span>.</span>News</h1>
+    <div class="tools">
+      <span class="live" id="live"><span class="dot"></span><span id="status">Đang tải</span></span>
+      <button class="btn" id="refresh" type="button">Cập nhật</button>
+    </div>
+  </header>
+  <section class="sys" id="sys" style="--i:1" aria-label="Công cụ trên máy bạn"></section>
+  <main class="shelves" id="shelves"></main>
+  <details class="other" id="other" hidden><summary id="othersum"></summary><ul class="rows" id="otherrows"></ul></details>
+  <details class="foot" id="errs" hidden><summary id="errsum"></summary><p id="errtxt"></p></details>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Chi tiết" tabindex="-1"></aside>
+<dialog id="dlg" aria-label="Cập nhật công cụ"></dialog>
+
+<script>
+"use strict";
+var TYPE = { release: "Phát hành", research: "Nghiên cứu", tutorial: "Hướng dẫn", opinion: "Góc nhìn", news: "Tin tức" };
+var SLOTS = 5;
+var $ = function (id) { return document.getElementById(id); };
+var data = null, firstPaint = true, opener = null, seen = {};
+
+function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function getJson(url, opts) { return fetch(url, opts).then(function (r) { return r.json(); }); }
+function safeUrl(u) { return /^https?:\/\//i.test(u) ? u : "#"; }
+function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+function hue(s) { return hash(s) % 360; }
+function initials(s) {
+  var w = s.replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean);
+  return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || "AI").slice(0, 2)).toUpperCase();
+}
+function ago(iso) {
+  if (!iso) return "";
+  var m = Math.round((Date.now() - Date.parse(iso)) / 60000), rtf = new Intl.RelativeTimeFormat("vi", { numeric: "auto" });
+  if (m < 60) return rtf.format(-Math.max(m, 1), "minute");
+  if (m < 1440) return rtf.format(-Math.round(m / 60), "hour");
+  return rtf.format(-Math.round(m / 1440), "day");
+}
+function kfmt(n) { return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(".0", "") + "k" : String(n); }
+function head(a) { return a.headline || a.titleVi || a.title; }
+
+/* ---------- drawer ---------- */
+function drawerBase(label, color) {
+  var d = $("drawer"); d.textContent = "";
+  var x = el("button", "close", "×"); x.type = "button"; x.setAttribute("aria-label", "Đóng"); x.onclick = closeDrawer; d.appendChild(x);
+  var c = el("div", "dcover");
+  c.style.setProperty("--c1", "hsl(" + color + " 62% 38%)"); c.style.setProperty("--c2", "hsl(" + ((color + 48) % 360) + " 68% 24%)");
+  d.appendChild(c);
+  var b = el("div", "dbody"); d.appendChild(b);
+  return { d: d, cover: c, body: b };
+}
+function link(text, url) { var a = el("a", "btn blue dlink", text); a.href = safeUrl(url); a.target = "_blank"; a.rel = "noopener noreferrer"; return a; }
+function showDrawer(d, from) {
+  opener = from || null; d.scrollTop = 0;
+  $("scrim").classList.add("on");
+  requestAnimationFrame(function () { d.classList.add("on"); });
+  d.focus();
+}
+function closeDrawer() {
+  $("drawer").classList.remove("on"); $("scrim").classList.remove("on");
+  if (opener && document.contains(opener)) opener.focus();
+}
+$("scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
+
+function openArticle(a, from) {
+  var p = drawerBase(a.source, hue(a.source)), b = p.body;
+  if (a.image && /^https?:\/\//i.test(a.image)) {
+    var img = document.createElement("img"); img.alt = ""; img.referrerPolicy = "no-referrer";
+    img.onload = function () { img.classList.add("ok"); }; img.onerror = function () { img.remove(); }; img.src = a.image; p.cover.appendChild(img);
+  }
+  var m = el("div", "meta");
+  m.appendChild(el("span", "tag", TYPE[a.type] || TYPE.news)); m.appendChild(el("strong", "", a.source));
+  var t = ago(a.publishedAt); if (t) m.appendChild(el("span", "", t));
+  b.appendChild(m);
+  b.appendChild(el("h2", "", a.titleVi || a.title));
+  b.appendChild(el("p", "sum", a.summary));
+  if (a.keyPoints && a.keyPoints.length) { var ul = el("ul"); a.keyPoints.forEach(function (k) { ul.appendChild(el("li", "", k)); }); b.appendChild(ul); }
+  if (a.quote) b.appendChild(el("blockquote", "", "“" + a.quote + "”"));
+  if (a.thin) b.appendChild(el("p", "note", "Nguồn chỉ cho đọc mô tả ngắn, nên bản tóm tắt này chưa dựa trên toàn văn."));
+  if (a.suggestion) {
+    var s = el("div", "sug"); s.appendChild(el("h3", "", a.suggestion.action));
+    [["Vì sao hợp", a.suggestion.why], ["Thử nhanh", a.suggestion.try], ["Rủi ro", a.suggestion.risk]].forEach(function (r) {
+      if (!r[1]) return; var q = el("p"); q.appendChild(el("b", "", r[0] + ": ")); q.appendChild(document.createTextNode(r[1])); s.appendChild(q);
+    });
+    b.appendChild(s);
+  }
+  var sc = el("div", "score"); sc.appendChild(el("span", "", "Liên quan " + a.relevance + "/10"));
+  var mt = el("div", "meter"); mt.style.setProperty("--w", a.relevance * 10 + "%"); mt.appendChild(el("i")); sc.appendChild(mt); b.appendChild(sc);
+  b.appendChild(link("Mở bài gốc", a.url));
+  showDrawer(p.d, from);
+}
+function openRepo(r, from) {
+  var p = drawerBase(r.name, hue(r.lang || r.name)), b = p.body;
+  var m = el("div", "meta"); m.appendChild(el("span", "tag", "GitHub trending")); if (r.lang) m.appendChild(el("strong", "", r.lang)); b.appendChild(m);
+  b.appendChild(el("h2", "", r.name));
+  b.appendChild(el("p", "sum", r.vi || r.desc || "Repo chưa có mô tả."));
+  if (r.vi && r.desc) b.appendChild(el("p", "note", "Mô tả gốc: " + r.desc));
+  var st = el("div", "stats");
+  [[kfmt(r.today), "sao hôm nay"], [kfmt(r.total), "tổng số sao"]].forEach(function (x) { var d = el("div"); d.appendChild(el("b", "", x[0])); d.appendChild(el("span", "", x[1])); st.appendChild(d); });
+  b.appendChild(st);
+  b.appendChild(link("Mở trên GitHub", r.url));
+  showDrawer(p.d, from);
+}
+var upTimer = null, upBusy = false;
+function closeDlg() { clearTimeout(upTimer); upBusy = false; var d = $("dlg"); if (d.open) d.close(); if (opener && document.contains(opener)) opener.focus(); }
+function pollUpdate(v, out, msg, btn) {
+  clearTimeout(upTimer);
+  getJson("/api/update/status").then(function (s) {
+    var j = s.job;
+    if (!j || j.tool !== v.id) { upTimer = setTimeout(function () { pollUpdate(v, out, msg, btn); }, 800); return; }
+    out.textContent = j.lines.join("\n"); out.scrollTop = out.scrollHeight;
+    if (j.state === "running") { upTimer = setTimeout(function () { pollUpdate(v, out, msg, btn); }, 1000); return; }
+    upBusy = false; btn.disabled = false; btn.textContent = "Đóng"; btn.onclick = closeDlg;
+    if (j.state === "done") { msg.textContent = "Đã cập nhật " + v.name + (j.after ? " lên " + j.after : "") + "."; load(); }
+    else { msg.classList.add("bad"); msg.textContent = j.error || "Cập nhật không thành công."; }
+  }).catch(function () { upTimer = setTimeout(function () { pollUpdate(v, out, msg, btn); }, 2000); });
+}
+function confirmUpdate(v, from) {
+  var dlg = $("dlg"); dlg.textContent = ""; opener = from || null; upBusy = false;
+  var box = el("div", "dbox");
+  box.appendChild(el("h2", "", "Cập nhật " + v.name + "?"));
+  var ver = el("p", "ver"); ver.appendChild(el("b", "", v.installed)); ver.appendChild(document.createTextNode("  →  ")); ver.appendChild(el("b", "", v.latest)); box.appendChild(ver);
+  var note = el("p", "note"); note.appendChild(document.createTextNode("Sẽ chạy lệnh này trên máy bạn: ")); note.appendChild(el("code", "", v.id + " update")); box.appendChild(note);
+  var out = el("pre", "out"); out.hidden = true; box.appendChild(out);
+  var msg = el("p", "msg"); msg.hidden = true; box.appendChild(msg);
+  var acts = el("div", "acts");
+  var cancel = el("button", "btn ghost", "Hủy"); cancel.type = "button"; cancel.onclick = closeDlg;
+  var ok = el("button", "btn blue", "Cập nhật"); ok.type = "button";
+  ok.onclick = function () {
+    ok.disabled = true; cancel.hidden = true; out.hidden = false; msg.hidden = false; upBusy = true;
+    msg.textContent = "Đang chạy " + v.id + " update…";
+    fetch("/api/update?tool=" + encodeURIComponent(v.id), { method: "POST", headers: { "x-ai-news": "update" } })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) { upBusy = false; msg.classList.add("bad"); msg.textContent = r.error || "Không bắt đầu được."; ok.disabled = false; ok.textContent = "Đóng"; ok.onclick = closeDlg; return; }
+        pollUpdate(v, out, msg, ok);
+      })
+      .catch(function () { upBusy = false; msg.classList.add("bad"); msg.textContent = "Mất kết nối với server."; ok.disabled = false; ok.textContent = "Đóng"; ok.onclick = closeDlg; });
+  };
+  acts.appendChild(cancel); acts.appendChild(ok); box.appendChild(acts);
+  dlg.appendChild(box);
+  dlg.oncancel = function (e) { if (upBusy) e.preventDefault(); else clearTimeout(upTimer); };
+  dlg.showModal();
+  ok.focus();
+}
+function openTool(v, from) {
+  if (v.outdated && v.installed && !v.managedBy) { confirmUpdate(v, from); return; }
+  var p = drawerBase(v.name, hue(v.name)), b = p.body;
+  var m = el("div", "meta"); m.appendChild(el("span", "tag", v.outdated ? "Có bản mới" : "Công cụ")); b.appendChild(m);
+  b.appendChild(el("h2", "", v.name));
+  var st = el("div", "stats");
+  [[v.installed || "—", "đang cài"], [v.latest || "—", "bản ổn định mới nhất"]].forEach(function (x) { var d = el("div"); d.appendChild(el("b", "", x[0])); d.appendChild(el("span", "", x[1])); st.appendChild(d); });
+  b.appendChild(st);
+  b.appendChild(el("p", "sum", !v.installed ? "Không chạy được lệnh kiểm tra phiên bản trên máy này." : !v.latest ? "Không đọc được phiên bản mới nhất từ GitHub." : v.outdated ? "Máy bạn đang dùng bản cũ hơn bản ổn định mới nhất." : "Bạn đang dùng bản mới nhất."));
+  if (v.outdated && v.managedBy) b.appendChild(el("p", "note", v.name + " trên máy bạn do " + v.managedBy + " quản lý, nên lệnh " + v.id + " update không chạy được. Hãy cập nhật từ " + v.managedBy + "; trang này sẽ tự thấy phiên bản mới ở lần làm mới sau."));
+  b.appendChild(link("Xem ghi chú phát hành", v.url));
+  showDrawer(p.d, from);
+}
+
+/* ---------- shelves ---------- */
+function row(ico, color, title, sub, onclick, key) {
+  var li = el("li"), b = el("button", "row"); b.type = "button";
+  var i = el("span", "ico", ico); i.style.setProperty("--c", "hsl(" + color + " 58% 42%)");
+  var t = el("span", "t"); t.appendChild(el("strong", "", title)); t.appendChild(el("span", "", sub));
+  b.appendChild(i); b.appendChild(t); b.onclick = function () { onclick(b); };
+  if (!firstPaint && key && !seen[key]) b.classList.add("fresh");
+  if (key) seen[key] = 1;
+  li.appendChild(b); return li;
+}
+function articleRow(a) { return row(initials(a.source), hue(a.source), head(a), a.source + " · " + ago(a.publishedAt), function (b) { openArticle(a, b); }, a.id); }
+function repoRow(r) { return row(initials(r.name.split("/")[1] || r.name), hue(r.lang || r.name), r.name.split("/")[1] || r.name, "★ " + kfmt(r.today) + " hôm nay · " + (r.vi || r.lang || r.desc), function (b) { openRepo(r, b); }, r.name); }
+
+function shelf(title, sub, items, makeRow, emptyText, i) {
+  var s = el("section", "shelf"); s.style.setProperty("--i", i + 2);
+  s.appendChild(el("h2", "", title)); s.appendChild(el("p", "sub", sub));
+  var ul = el("ul", "rows");
+  items.slice(0, SLOTS).forEach(function (x) { ul.appendChild(makeRow(x)); });
+  s.appendChild(ul);
+  if (!items.length) s.appendChild(el("div", "hole", emptyText));
+  if (items.length > SLOTS) s.appendChild(el("p", "more", "+" + (items.length - SLOTS) + " mục nữa ở phần Tin khác"));
+  return s;
+}
+function skeleton() {
+  var box = $("shelves"); box.textContent = "";
+  ["Cần cập nhật", "Mẹo mới", "Repo đang hot"].forEach(function (t, i) {
+    var s = el("section", "shelf"); s.style.setProperty("--i", i + 2); s.appendChild(el("h2", "", t));
+    s.appendChild(el("p", "sub", "Đang lấy dữ liệu…"));
+    var ul = el("ul", "rows");
+    for (var k = 0; k < SLOTS; k++) { var li = el("li", "sk"); li.appendChild(el("i")); var d = el("div"); d.appendChild(el("i")); d.appendChild(el("i")); li.appendChild(d); ul.appendChild(li); }
+    s.appendChild(ul); box.appendChild(s);
+  });
+}
+
+function render() {
+  var arts = data.articles, versions = data.versions || [];
+  var sys = $("sys"); sys.textContent = "";
+  versions.forEach(function (v) {
+    var b = el("button", "tool" + (v.outdated ? " old" : !v.installed || !v.latest ? " unk" : "")); b.type = "button";
+    b.appendChild(el("span", "st"));
+    b.appendChild(el("b", "", v.name));
+    b.appendChild(el("small", "", v.outdated ? v.installed + " → " + v.latest : v.installed ? v.installed + (v.latest ? " · mới nhất" : "") : "không tìm thấy"));
+    b.onclick = function () { openTool(v, b); };
+    sys.appendChild(b);
+  });
+  sys.hidden = !versions.length;
+
+  var updates = arts.filter(function (a) { return a.lane === "update"; });
+  var tricks = arts.filter(function (a) { return a.lane === "trick"; });
+  var repos = (data.trending || []).filter(function (r) { return r.ai; }).sort(function (a, b) { return b.relevance - a.relevance || b.today - a.today; });
+  var box = $("shelves"); box.textContent = "";
+  box.appendChild(shelf("Cần cập nhật", "Bản mới của công cụ bạn dùng", updates, articleRow, "Tuần này chưa có bản phát hành nào đáng chú ý.", 0));
+  box.appendChild(shelf("Mẹo mới", "Cách dùng AI hiệu quả hơn", tricks, articleRow, "Chưa có mẹo mới. Bấm Cập nhật để lấy thêm.", 1));
+  box.appendChild(shelf("Repo đang hot", "GitHub trending hôm nay, về AI", repos, repoRow, "Chưa đọc được GitHub trending.", 2));
+
+  var shownIds = {};
+  updates.slice(0, SLOTS).concat(tricks.slice(0, SLOTS)).forEach(function (a) { shownIds[a.id] = 1; });
+  var rest = arts.filter(function (a) { return !shownIds[a.id]; });
+  var otherRepos = (data.trending || []).filter(function (r) { return !r.ai; });
+  var od = $("other"), ul = $("otherrows"); ul.textContent = "";
+  rest.forEach(function (a) { ul.appendChild(articleRow(a)); });
+  repos.slice(SLOTS).concat(otherRepos).forEach(function (r) { ul.appendChild(repoRow(r)); });
+  od.hidden = !ul.children.length;
+  $("othersum").textContent = "Tin khác (" + ul.children.length + ")";
+  firstPaint = false;
+}
+
+/* ---------- loading ---------- */
+var wasRunning = false, loaded = false;
+function load() {
+  return getJson("/api/library").then(function (d) { data = d; render(); loaded = true; });
+}
+function pollStatus() {
+  return getJson("/api/status").then(function (s) {
+    $("bar").classList.toggle("on", s.running);
+    $("live").classList.toggle("run", s.running);
+    $("refresh").disabled = s.running;
+    var last = s.progress && s.progress.length ? s.progress[s.progress.length - 1] : "";
+    $("status").textContent = s.running ? "Đang lấy bài mới" + (last ? ": " + last.slice(0, 36) : "") : s.lastRun ? "Cập nhật " + ago(s.lastRun.at) : "Chưa chạy lần nào";
+    var errs = s.lastRun && !s.running ? s.lastRun.errors : [];
+    $("errs").hidden = !errs.length;
+    if (errs.length) { $("errsum").textContent = errs.length + " nguồn hoặc bài không đọc được"; $("errtxt").textContent = errs.join("; "); }
+    if (wasRunning && !s.running) load();
+    wasRunning = s.running;
+  }).catch(function () { $("status").textContent = "Mất kết nối với server"; });
+}
+$("refresh").addEventListener("click", function () { this.disabled = true; fetch("/api/refresh", { method: "POST" }).then(pollStatus); });
+
+skeleton();
+load().then(function () { setTimeout(function () { $("app").classList.remove("boot"); }, 1500); });
+pollStatus();
+setInterval(pollStatus, 3000);
+</script>
+</body>
+</html>
